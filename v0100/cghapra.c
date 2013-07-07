@@ -343,19 +343,19 @@ void GenPrintCallFxn(char* name)
   
 }
 
-int GenPrepareOperand(int operand, int val) {
+int GenPrepareOperand(int operand, int val, int temp) {
 	if (operand < MipsOpIndRegZero)
 		return operand;
 	if (operand == MipsOpConst || operand == MipsOpNumLabel || operand == MipsOpLabel) {
-		printf2("\tldi\t$1, ");
+		printf2("\tldi\t$%d, ", temp);
 		GenPrintOperand(operand, val);
 		printf2("\n");
-		return 1;
+		return temp;
 	}
 	operand -= MipsOpIndRegZero;
-	printf2("\tldi\t$1, %d\n", val);
-	printf2("\tadd\t$1, $1, $%d\n", operand);
-	return 1;
+	printf2("\tldi\t$%d, %d\n",temp,  val);
+	printf2("\tadd\t$%d, $%d, $%d\n", temp, temp, operand);
+	return temp;
 }
 
 void GenPrintInstr1Operand(int instr, int instrval, int operand, int operandval)
@@ -371,7 +371,12 @@ void GenPrintInstr2Operands(int instr, int instrval, int operand1, int operand1v
       (instr == MipsInstrAddU || instr == MipsInstrSubU))
     return;
   
-  int realop = GenPrepareOperand(operand2, operand2val);
+  if (instr == HapraInstrLdi) {
+	 GenPrepareOperand(operand2, operand2val, operand1);
+	 return;
+  }
+  
+  int realop = GenPrepareOperand(operand2, operand2val, MipsOpRegAt);
 
   GenPrintInstr(instr, instrval);
   GenPrintOperand(operand1, operand1val);
@@ -395,7 +400,7 @@ void GenPrintInstr3Operands(int instr, int instrval,
       (instr == MipsInstrAddU || instr == MipsInstrSubU))
     return;
 
-  int realop = GenPrepareOperand(operand3, operand3val);
+  int realop = GenPrepareOperand(operand3, operand3val, MipsOpRegAt);
   
   GenPrintInstr(instr, instrval);
   GenPrintOperand(operand1, operand1val);
@@ -947,7 +952,7 @@ void GenExpr0(void)
         if (gotUnary)
           GenPushReg(MipsOpRegV0);
 
-        GenPrintInstr2Operands(MipsInstrLI, 0,
+        GenPrintInstr2Operands(HapraInstrLdi, 0,
                                MipsOpRegV0, 0,
                                MipsOpConst, v);
       }
@@ -964,7 +969,7 @@ void GenExpr0(void)
                            stack[i + 1][0] == tokPostInc ||
                            stack[i + 1][0] == tokPostDec)))
       {
-        GenPrintInstr2Operands(MipsInstrLA, 0,
+        GenPrintInstr2Operands(HapraInstrLdi, 0,
                                MipsOpRegV0, 0,
                                MipsOpLabel, v);
       }
