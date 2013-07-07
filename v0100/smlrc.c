@@ -1671,9 +1671,18 @@ int GetToken(void)
 
 #ifdef MIPS
 #include "cgmips.c"
-#else
+#define CODEGEN
+#endif
+
+#ifdef HAPRA
+#include "cghapra.c"
+#define CODEGEN
+#endif
+
+#ifndef CODEGEN
 #include "cgx86.c"
-#endif // #ifdef MIPS
+#define CODEGEN
+#endif 
 
 // expr.c code
 
